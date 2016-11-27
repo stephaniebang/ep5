@@ -125,14 +125,12 @@ int menor_anterior(int **m, int lin, int col, char cor) {
 }
 
 int caminho_completo(char **tab, char cor) {
-   int i, j, menor, **m, k;
+   int i, j, menor, **m;
 
    m = malloc(tamanho*sizeof(int *));
 
    for (i = 0; i < tamanho; i++)
       m[i] = malloc(tamanho*sizeof(int));
-
-   printf("\nImpressao da matriz de caminho da peca %c\n", cor);
 
    if (cor == 'p') {
       for (i = 0; i < tamanho; i++)
@@ -178,15 +176,6 @@ int caminho_completo(char **tab, char cor) {
          if (menor > m[tamanho-1][j]);
    }
 
-   for (i = 0; i < tamanho; i++) {
-      for (k = 0; k < i; k++)   printf("  ");
-
-      for (j = 0; j < tamanho; j++)
-         printf("%d ", m[i][j]);
-
-      printf("\n");
-   }
-
    for (i = 0; i < tamanho; i++)   free(m[i]);
    
    free(m);
@@ -209,71 +198,214 @@ int uma_borda(coordenadas c1, coordenadas c2) {
    return 0;
 }
 
-int duas_bordas(coordenadas c1, coordenadas c2) {
-   if (absoluto(c1.x-c2.x) == 1)
-      if (absoluto(c1.y-c2.y) == 2 || absoluto(c1.y-c2.y) == 3)   return 1;
+coordenadas duas_bordas(coordenadas c1, coordenadas c2) {
+   coordenadas resposta;
 
-   if (absoluto(c1.x-c2.x) == 2)
-      if (absoluto(c1.y-c2.y) == 1 || absoluto(c1.y-c2.y) == 3)   return 1;
+   resposta.x = absoluto(c1.x-c2.y);
+   resposta.y = absoluto(c1.x-c2.y);
 
-   if (absoluto(c1.x-c2.x) == 3)
-      if (absoluto(c1.y-c2.y) == 1 || absoluto(c1.y-c2.y) == 2)   return 1;
+   if (resposta.x > 3 || resposta.x < 1 || resposta.y > 3 || resposta.y < 1)
+      resposta.x = -1;
 
-   return 0;
+   else if (absoluto(c1.x-c2.x+c1.y-c2.y) > 3)
+      resposta.x = -1;
+
+   else {
+      resposta.x = (c1.x+c2.x)/2;
+      resposta.y = (c1.y+c2.y)/2;
+   }
+
+   return resposta;
 }
 
-int tres_bordas(coordenadas c1, coordenadas c2) {
-   if (absoluto(c1.x-c2.x) == 1)
-      if (absoluto(c1.y-c2.y) == 3 || absoluto(c1.y-c2.y) == 4)   return 1;
+coordenadas tres_bordas(coordenadas c1, coordenadas c2) {
+   coordenadas resposta;
 
-   if (absoluto(c1.x-c2.x) == 2)
-      if (absoluto(c1.y-c2.y) == 2 || absoluto(c1.y-c2.y) == 4)   return 1;
+   resposta.x = absoluto(c1.x-c2.x);
+   resposta.y = absoluto(c1.y-c2.y);
 
-   if (absoluto(c1.x-c2.x) == 3)
-      if (absoluto(c1.y-c2.y) == 1 || absoluto(c1.y-c2.y) == 4)   return 1;
+   if (resposta.x > 4 || resposta.x < 1 || resposta.y > 4 || resposta.y < 1)
+      resposta.x = -1;
 
-   if (absoluto(c1.x-c2.x) == 4)
-      if (absoluto(c1.y-c2.y) < 0 && absoluto(c1.y-c2.y) > 4)   return 1;
+   else if (absoluto(c1.x-c2.x+c1.y-c2.y) > 4)
+      resposta.x = -1;
 
-   return 0;
+   else {
+      if ((resposta.x == 2 && resposta.y == 2) || (resposta.x == 2*resposta.y) ||
+            (resposta.y == 2*resposta.x)) {
+         resposta.x = (c1.x+c2.x)/2;
+         resposta.y = (c1.y+c2.y)/2;
+      }
+
+      else if (resposta.x+resposta.y == 4) {
+         resposta.x = (c1.x+c2.x)/2;
+         resposta.y = (c1.y+c2.y)/2;
+      }
+
+      else if (resposta.x == 4) {
+         resposta.x = ((c1.x+c2.x)/2)-1;
+         resposta.y = (c1.y+c2.y)/2;
+      }
+
+      else if (resposta.y == 4) {
+         resposta.x = (c1.x+c2.x)/2;
+         resposta.y = ((c1.y-c2.y)/2)-1;
+      }
+
+      else   resposta.x = -1;
+   }
+
+   return resposta;
 }
 
-int um_entre(coordenadas c1, coordenadas c2) {
-   if (absoluto(c1.x-c2.x) == 1)
-      if (absoluto(c1.y-c2.y) == 1 || absoluto(c1.y-c2.y) == 2)
-         return 1;
+coordenadas um_entre(coordenadas c1, coordenadas c2) {
+   coordenadas resposta;
 
-   if (absoluto(c1.x-c2.y) == 2 && absoluto(c1.y-c2.y) == 1)
-      return 1;
+   resposta.x = absoluto(c1.x-c2.x);
+   resposta.y = absoluto(c1.y-c2.y);
 
-   return 0;
+   if ((resposta.x != 2 && resposta.x != 0) || (resposta.y != 2 && resposta.y != 0))
+      resposta.x = -1;
+
+   else if (resposta.x == resposta.y && c1.x-c2.x+c1.y-c2.y != 0)
+      resposta.x = -1;
+
+   else {
+      resposta.x = (c1.x+c2.x)/2;
+      resposta.y = (c1.y+c2.y)/2;
+   }
+
+   return resposta;
 }
 
-int dois_entre(coordenadas c1, coordenadas c2) {
-   if (absoluto(c1.x-c2.x) == 3)
-      if (c1.y == c2.y || absoluto(c1.y-c2.y) == 3)   return 1;
+coordenadas dois_entre(coordenadas c1, coordenadas c2) {
+   coordenadas resposta;
 
-   if (absoluto(c1.y-c2.y) == 3)
-      if (c1.x == c2.x || absoluto(c1.x-c2.x) == 3)   return 1;
+   resposta.x = absoluto(c1.x-c2.x);
+   resposta.y = absoluto(c1.y-c2.y);
 
-   return 0;
+   if ((resposta.x != 3 && resposta.x != 0) || (resposta.y != 3 && resposta.y != 0))
+      resposta.x = -1;
+
+   else if (resposta.x == resposta.y && c1.x-c2.x+c1.y-c2.y != 0)
+      resposta.x = -1;
+
+   else {
+      if (resposta.x == 0)   resposta.x = c1.x;
+
+      else if (c1.x > c2.x)   resposta.x = c1.x-1;
+
+      else   resposta.x = c1.x+1;
+
+      if (resposta.y == 0)   resposta.y = c1.y;
+
+      else if (c1.y > c2.y)   resposta.y = c1.y-1;
+
+      else   resposta.y = c1.y+1;
+   }
+
+   return resposta;
 }
 
-int tres_entre(coordenadas c1, coordenadas c2) {
-    if (absoluto(c1.x-c2.x) == 4)
-      if (c1.y == c2.y || absoluto(c1.y-c2.y) == 4)   return 1;
+coordenadas tres_entre(coordenadas c1, coordenadas c2) {
+   coordenadas resposta;
 
-   if (absoluto(c1.y-c2.y) == 4)
-      if (c1.x == c2.x || absoluto(c1.x-c2.x) == 4)   return 1;
+   resposta.x = absoluto(c1.x-c2.x);
+   resposta.y = absoluto(c1.y-c2.y);
 
-   return 0;  
+   if ((resposta.x != 4 && resposta.x != 0) || (resposta.y != 4 && resposta.y != 0))
+      resposta.x = -1;
+
+   else if (resposta.x == resposta.y && c1.x-c2.x+c1.y-c2.y != 0)
+      resposta.x = -1;
+
+   else {
+      if (resposta.x == 0)   resposta.x = c1.x;
+
+      else if (c1.x > c2.x)   resposta.x = c1.x-2;
+
+      else   resposta.x = c1.x+2;
+
+      if (resposta.y == 0)   resposta.y = c1.y;
+
+      else if (c1.y > c2.y)   resposta.y = c1.y-2;
+
+      else   resposta.y = c1.y+2;
+   }
+
+   return resposta;
 }
 
-coordenadas decide_jogada(char **tab, char cor, coordenadas novo, coordenadas ant) {
-   coordenadas r;
+coordenadas decide_jogada(char **tab, char cor, int gan, int per, coordenadas novo, coordenadas ant) {
+   coordenadas jogada;
 
-   for (r.x = 0; r.x < tamanho; r.x++)
-      for (r.y = 0; r.y < tamanho; r.y++)
-         if (tab[r.x][r.y] == '-')   return r;
-/*   if (um_entre(novo, ant)) ;*/
+   /**/
+
+   /* Tentando contra-atacar a nova jogada em relacao a anterior */
+   jogada = um_entre(novo, ant);
+
+   if (jogada.x >= 0)
+      if (jogada.x < tamanho && jogada.y < tamanho && tab[jogada.x][jogada.y] == '-')
+         return jogada;
+   
+   jogada = dois_entre(novo, ant);
+
+   if (jogada.x >= 0) {
+      if (jogada.x < tamanho && jogada.y < tamanho && tab[jogada.x][jogada.y] == '-')
+         return jogada;
+
+      else {
+         jogada = dois_entre(ant, novo);
+
+         if (jogada.x < tamanho && jogada.y < tamanho && tab[jogada.x][jogada.y] == '-')
+            return jogada;
+      }
+   }
+
+   jogada = duas_bordas(novo, ant);
+
+   if (jogada.x >= 0) {
+      if (jogada.x < tamanho && jogada.y < tamanho && tab[jogada.x][jogada.y] == '-')
+         return jogada;
+
+      else {
+         jogada = duas_bordas(ant, novo);
+
+         if (jogada.x < tamanho && jogada.y < tamanho && tab[jogada.x][jogada.y] == '-')
+            return jogada;
+      }
+   }
+
+   jogada = tres_entre(novo, ant);
+
+   if (jogada.x >= 0) {
+      if (jogada.x < tamanho && jogada.y < tamanho && tab[jogada.x][jogada.y] == '-')
+         return jogada;
+
+      else {
+         jogada = dois_entre(ant, novo);
+
+         if (jogada.x < tamanho && jogada.y < tamanho && tab[jogada.x][jogada.y] == '-')
+            return jogada;
+      }
+   }
+
+   jogada = tres_bordas(novo, ant);
+
+   if (jogada.x >= 0) {
+      if (jogada.x < tamanho && jogada.y < tamanho && tab[jogada.x][jogada.y] == '-')
+         return jogada;
+
+      else {
+         jogada = tres_bordas(ant, novo);
+
+         if (jogada.x < tamanho && jogada.y < tamanho && tab[jogada.x][jogada.y] == '-')
+            return jogada;
+      }
+   }
+
+   for (jogada.x = 0; jogada.x < tamanho; jogada.x++)
+      for (jogada.y = 0; jogada.y < tamanho; jogada.y++)
+         if (tab[jogada.x][jogada.y] == '-')   return jogada;
+   /*  */
 }

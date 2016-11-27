@@ -44,7 +44,7 @@ int pie_rule(char **tab, coordenadas jog, char cor);
  * contrario. */
 int caminho_completo(char **tab, char cor);
 
-coordenadas decide_jogada(char **tab, char cor, coordenadas novo, coordenadas ant);
+coordenadas decide_jogada(char **tab, char cor, int gan, int per, coordenadas novo, coordenadas ant);
 
 
 #endif

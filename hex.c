@@ -9,6 +9,7 @@
 int main(int argc, char *argv[]) {
    char peca, **tab;
    coordenadas jogada;
+   int ganhou, perdeu;
    jogador *adversario;
 
    /* Inicializando o jogo */
@@ -36,14 +37,14 @@ int main(int argc, char *argv[]) {
       troca_jogadores(&peca, &(adversario->cor));
 
    /* Continuando o jogo ate alguem completar um caminho */
-   while (caminho_completo(tab, peca) && caminho_completo(tab, adversario->cor)) {
+   while ((ganhou = caminho_completo(tab, peca)) && (perdeu = caminho_completo(tab, adversario->cor))) {
       /* Recebendo e guardando a jogada do adversario */
       jogada = recebe_jogada(tab, adversario->cor);
 
       empilha(adversario, jogada);
 
       /* Escolhendo e realizando a propria jogada */
-      jogada = decide_jogada(tab, peca, jogada, adversario->jogadas[adversario->topo-2]);
+      jogada = decide_jogada(tab, peca, ganhou, perdeu, jogada, adversario->jogadas[adversario->topo-2]);
 
       faz_jogada(tab, peca, jogada);
    }
