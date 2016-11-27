@@ -39,14 +39,12 @@ coordenadas recebe_jogada(char **tab, char cor);
  * a jogada adversaria e retorna 1, se ela for repetida, ou 0, caso contrario. */
 int pie_rule(char **tab, coordenadas jog, char cor);
 
-coordenadas proximo(char **tab, char cor, coordenadas inicio);
-
 /* A funcao recebe uma matriz m e um char c com a cor de um jogador. Ela
  * retorna 1, se ele conseguiu formar um caminho completo, ou retorna 0, caso
  * contrario. */
 int caminho_completo(char **tab, char cor);
 
-coordenadas decide_jogada(char **tab, char cor);
+coordenadas decide_jogada(char **tab, char cor, coordenadas novo, coordenadas ant);
 
 
 #endif

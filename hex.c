@@ -35,18 +35,18 @@ int main(int argc, char *argv[]) {
    if (pie_rule(tab, jogada, peca))
       troca_jogadores(&peca, &(adversario->cor));
 
-   /* Continuando o jogo ate alguem completar um caminho /
-   while (!caminho_completo(tab, peca) && !caminho_completo(tab, adversario->cor)) {
-      * Recebendo e guardando a jogada do adversario /
+   /* Continuando o jogo ate alguem completar um caminho */
+   while (caminho_completo(tab, peca) && caminho_completo(tab, adversario->cor)) {
+      /* Recebendo e guardando a jogada do adversario */
       jogada = recebe_jogada(tab, adversario->cor);
 
       empilha(adversario, jogada);
 
-      * Escolhendo e realizando a propria jogada *
-      jogada = decide_jogada(tab, peca);
+      /* Escolhendo e realizando a propria jogada */
+      jogada = decide_jogada(tab, peca, jogada, adversario->jogadas[adversario->topo-2]);
 
-      faz_jogada(tab, peca, jogada, impressao);
-   }*/
+      faz_jogada(tab, peca, jogada);
+   }
 
    return 0;
 }
