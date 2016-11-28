@@ -3,7 +3,7 @@ CFLAGS = -Wall -ansi -pedantic -g -O2
 
 .PHONY: clean
 
-ep5: hex.o jogo.o jogador.o
+ep5: hex.o jogo.o jogador.o tipos.h
 	$(CC) $(CFLAGS) -o $@ $^
 
 %.o: %.c %.h

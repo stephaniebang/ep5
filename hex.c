@@ -4,50 +4,69 @@
 #include <stdio.h>
 #include "jogador.h"
 #include "jogo.h"
+#include "tipos.h"
 
 
 int main(int argc, char *argv[]) {
-   char peca, **tab;
-   coordenadas jogada;
-   int ganhou, perdeu;
-   jogador *adversario;
+   char **tab;
+   posicao jogada;
+   jogador *adversario, *eu;
 
    /* Inicializando o jogo */
    tab = cria_tabuleiro();
-   peca = argv[1][0];
-   adversario = cria_jogador(50);
+   eu = cria_jogador(2*tamanho);
+   adversario = cria_jogador(2*tamanho);
+
+   eu->cor = argv[1][0];
 
    if (argc == 3 && argv[2][0] == 'd')   impressao = 1;
 
-   /* Realizando a primeira rodada de jogadas */
-   if (peca == 'b') {   /* Se for o primeiro jogador */
+   /* Realizando as jogadas iniciais */
+   if (eu->cor == 'b') {   /* Se eu for o primeiro jogador */
       adversario->cor = 'p';
       jogada.x = tamanho-3;
       jogada.y = 0;
 
-      faz_jogada(tab, peca, jogada);
+      faz_jogada(tab, eu->cor, jogada);
    }
 
-   if (peca == 'p') {   /* Se for o segundo jogador */
+   else if (eu->cor == 'p') {   /* Se eu for o segundo jogador */
       adversario->cor = 'b';
       jogada = recebe_jogada(tab, adversario->cor);
    }
 
-   if (pie_rule(tab, jogada, peca))
-      troca_jogadores(&peca, &(adversario->cor));
+   else   return 0;
+
+   if (pie_rule(tab, jogada, eu->cor))
+      troca_jogadores(&(eu->cor), &(adversario->cor));
+
+   inicializa_matriz(tab, eu);
+   inicializa_matriz(tab, adversario);
 
    /* Continuando o jogo ate alguem completar um caminho */
-   while ((ganhou = caminho_completo(tab, peca)) && (perdeu = caminho_completo(tab, adversario->cor))) {
-      /* Recebendo e guardando a jogada do adversario */
+   while (eu->m[eu->caminho[0].x][eu->caminho[0].y]) {
+      /* Recebendo a jogada do adversario */
       jogada = recebe_jogada(tab, adversario->cor);
 
-      empilha(adversario, jogada);
+      atualiza_matriz(tab, adversario, jogada);
+      printf("atualizou\n");
 
-      /* Escolhendo e realizando a propria jogada */
-      jogada = decide_jogada(tab, peca, ganhou, perdeu, jogada, adversario->jogadas[adversario->topo-2]);
+      if (!adversario->m[adversario->caminho[0].x][adversario->caminho[0].y])
+         break;
 
-      faz_jogada(tab, peca, jogada);
+      /* Decidindo e efetuando a propria jogada */
+      jogada = decide_jogada(tab, eu, adversario, jogada);
+
+      faz_jogada(tab, eu->cor, jogada);
+
+      atualiza_matriz(tab, adversario, jogada);
+      atualiza_matriz(tab, eu, jogada);
    }
+
+   if (!(eu->m[eu->caminho[0].x][eu->caminho[0].y]))
+      printf("%c ganhou\n", eu->cor);
+
+   else   printf("%c ganhou\n", adversario->cor);
 
    return 0;
 }

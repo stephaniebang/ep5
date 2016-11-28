@@ -1,13 +1,13 @@
 /* Stephanie Eun Ji Bang   n.USP 8994414 */
 
 #include "jogo.h"
+#include "jogador.h"
 #include <stdlib.h>
 #include <stdio.h>
 
 
-int tamanho = 11;   /* Tamanho do tabuleiro */
-int impressao = 0;   /* Flag para impressao */
-
+int tamanho = 11;
+int impressao = 0;
 
 /***********************
 * Funcoes do tabuleiro *
@@ -41,7 +41,7 @@ void imprime_tabuleiro(char **tab) {
    }
 }
 
-void faz_jogada(char **tab, char cor, coordenadas jog) {
+void faz_jogada(char **tab, char cor, posicao jog) {
    tab[jog.x][jog.y] = cor;
 
    printf("%d %d\n", jog.x, jog.y);
@@ -49,7 +49,7 @@ void faz_jogada(char **tab, char cor, coordenadas jog) {
    if (impressao)   imprime_tabuleiro(tab);
 }
 
-int jogada_valida(char **tab, coordenadas jog) {
+int jogada_valida(char **tab, posicao jog) {
    if (jog.x < 0 || jog.x >= tamanho || jog.y < 0 || jog.y >= tamanho)
       return 0;
 
@@ -58,8 +58,8 @@ int jogada_valida(char **tab, coordenadas jog) {
    return 1;
 }
 
-coordenadas recebe_jogada(char **tab, char cor) {
-   coordenadas jog;
+posicao recebe_jogada(char **tab, char cor) {
+   posicao jog;
 
    scanf("%d %d", &jog.x, &jog.y);
 
@@ -77,10 +77,41 @@ coordenadas recebe_jogada(char **tab, char cor) {
 /************************
 * Funcoes de estrategia *
 ************************/
-int pie_rule(char **tab, coordenadas jog, char cor) {
+int pie_rule(char **tab, posicao jog, char cor) {
    int troca = 0;
 
-   if (cor == 'p') {
+   if (cor == 'b') {   /* Se eu for o jogador branco */
+      /* Recebendo a primeira jogada do preto */
+      scanf("%d %d", &jog.x, &jog.y);
+
+      while (jog.x < 0 || jog.x >= tamanho || jog.y < 0 || jog.y >= tamanho) {
+         printf("Jogada invalida. Digite outra jogada.\n");
+         scanf("%d %d", &jog.x, &jog.y);
+      }
+
+      if (tab[jog.x][jog.y] == 'b') {
+         troca = 1;
+         cor = 'p';
+      }
+
+      else    tab[jog.x][jog.y] = 'p';
+
+      /* Respondendo a jogada */
+      if (jog.x < 3 || jog.y < 3) {
+         jog.x = tamanho/2;
+         jog.y = tamanho/2;
+      }
+
+      else {
+         if (tab[jog.x-1][jog.y] == '-')
+            jog.x--;
+
+         else   jog.y--;
+      }
+   }
+
+   else {   /* Se eu for o jogador preto */
+      /* Decidindo qual jogada realizar */
       if (jog.x < 2 || jog.x > tamanho-3 || jog.y < 2 || jog.y > tamanho-3) {
          jog.x = tamanho/2;
          jog.y = tamanho/2;
@@ -90,322 +121,75 @@ int pie_rule(char **tab, coordenadas jog, char cor) {
          cor = 'b';
          troca = 1;
       }
-
-      faz_jogada(tab, cor, jog);
    }
 
-   else {
-      scanf("%d %d", &jog.x, &jog.y);
-
-      while (jog.x < 0 || jog.x >= tamanho || jog.y < 0 || jog.y >= tamanho) {
-         printf("Jogada invalida. Digite outra jogada.\n");
-         scanf("%d %d", &jog.x, &jog.y);
-      }
-
-      if (tab[jog.x][jog.y] == 'p')   troca = 1;
-
-      tab[jog.x][jog.y] = 'b';
-   }
+   faz_jogada(tab, cor, jog);
 
    return troca;
 }
 
-int menor_anterior(int **m, int lin, int col, char cor) {
-   if (cor == 'p') {
-      if (lin+1 < tamanho && m[lin][col-1] > m[lin+1][col-1])
-         return m[lin+1][col-1];
+int caminho_completo(char **tab, jogador *jog) {
+   posicao c;
+   int i, j, menor;
 
-      return m[lin][col-1];
+   if (jog->cor == 'p') {
+      for (i = tamanho-1; i >= 0; i--) {
+         menor = 0;
+
+         for (j = 1; j < tamanho; j++)
+            if (jog->m[i][j] < jog->m[i][menor])   menor = j;
+
+         c.x = i;
+         c.y = menor;
+
+         empilha(jog, c);
+      }
    }
 
-   if (col+1 < tamanho && m[lin-1][col] > m[lin-1][col+1])
-      return m[lin-1][col+1];
+   else {
+      for (j = 0; j < tamanho; j++) {
+         menor = 0;
 
-   return m[lin-1][col];
+         for (i = 1; i < tamanho; i++)
+            if (jog->m[i][j] < jog->m[menor][j])   menor = i;
+
+         c.x = menor;
+         c.y = j;
+
+         empilha(jog, c);
+      }
+   }
+
+   return jog->topo;
 }
 
-int caminho_completo(char **tab, char cor) {
-   int i, j, menor, **m;
+posicao posicao_critica(jogador *jog) {
+   int i, p1, p2, u1, u2;
 
-   m = malloc(tamanho*sizeof(int *));
+   p1 = p2 = u1 = u2 = 0;
 
-   for (i = 0; i < tamanho; i++)
-      m[i] = malloc(tamanho*sizeof(int));
+   for (i = 1; i < jog->topo; i++)
+      if (jog->m[jog->caminho[i].x][jog->caminho[i].y] !=
+            jog->m[jog->caminho[u2].x][jog->caminho[u2].y])
+         u2++;
 
-   if (cor == 'p') {
-      for (i = 0; i < tamanho; i++)
-         if (tab[i][0] == 'p')   m[i][0] = 0;
-
-         else   m[i][0] = 1;
-
-      for (j = 1; j < tamanho; j++) {
-         for (i = 0; i < tamanho; i++) {
-            menor = menor_anterior(m, i , j, 'p');
-           
-            if (tab[i][j] == 'p')   m[i][j] = menor;
-
-            else   m[i][j] = menor+1;
+      else {
+         if (u1-p1 < u2-p2) {
+            p1 = p2;;
+            u1 = u2;
          }
+
+         p2 = u2 = i;
       }
 
-      menor = m[0][tamanho-1];
-
-      for (i = 1; i < tamanho; i++)
-         if (menor > m[i][tamanho-1])   menor = m[i][tamanho-1];
-   }
-
-   else {
-      for (j = 0; j < tamanho; j++)
-         if (tab[0][j] == 'b')   m[0][j] = 0;
-
-         else   m[0][j] = 1;
-
-      for (i = 1; i < tamanho; i++) {
-         for (j = 0; j < tamanho; j++) {
-            menor = menor_anterior(m, i, j, 'b');
-
-            if (tab[i][j] == cor)   m[i][j] = menor;
-
-            else   m[i][j] = menor+1;
-         }
-      }
-
-      menor = m[tamanho-1][0];
-
-      for (j = 1; j < tamanho; j++)
-         if (menor > m[tamanho-1][j]);
-   }
-
-   for (i = 0; i < tamanho; i++)   free(m[i]);
-   
-   free(m);
-
-   return menor;
+   return jog->caminho[(p2+u2)/2];
 }
 
-int absoluto(int x) {
-   if (x < 0)   return -x;
+posicao decide_jogada(char **tab, jogador *jog, jogador *adv, posicao ultimo) {
+   atualiza_matriz(tab, jog, ultimo);
 
-   return x;
-}
+   if (jog->m[jog->caminho[0].x][jog->caminho[0].y] < 4)   return posicao_critica(jog);
 
-int uma_borda(coordenadas c1, coordenadas c2) {
-   if (absoluto(c1.x-c2.x) == 1)
-      if (absoluto(c1.y-c2.y) == 1 || absoluto(c1.y-c2.y) == 2)   return 1;
-
-   if (absoluto(c1.x-c2.x) == 2 && absoluto(c1.y-c2.y) == 1)   return 1;
-
-   return 0;
-}
-
-coordenadas duas_bordas(coordenadas c1, coordenadas c2) {
-   coordenadas resposta;
-
-   resposta.x = absoluto(c1.x-c2.y);
-   resposta.y = absoluto(c1.x-c2.y);
-
-   if (resposta.x > 3 || resposta.x < 1 || resposta.y > 3 || resposta.y < 1)
-      resposta.x = -1;
-
-   else if (absoluto(c1.x-c2.x+c1.y-c2.y) > 3)
-      resposta.x = -1;
-
-   else {
-      resposta.x = (c1.x+c2.x)/2;
-      resposta.y = (c1.y+c2.y)/2;
-   }
-
-   return resposta;
-}
-
-coordenadas tres_bordas(coordenadas c1, coordenadas c2) {
-   coordenadas resposta;
-
-   resposta.x = absoluto(c1.x-c2.x);
-   resposta.y = absoluto(c1.y-c2.y);
-
-   if (resposta.x > 4 || resposta.x < 1 || resposta.y > 4 || resposta.y < 1)
-      resposta.x = -1;
-
-   else if (absoluto(c1.x-c2.x+c1.y-c2.y) > 4)
-      resposta.x = -1;
-
-   else {
-      if ((resposta.x == 2 && resposta.y == 2) || (resposta.x == 2*resposta.y) ||
-            (resposta.y == 2*resposta.x)) {
-         resposta.x = (c1.x+c2.x)/2;
-         resposta.y = (c1.y+c2.y)/2;
-      }
-
-      else if (resposta.x+resposta.y == 4) {
-         resposta.x = (c1.x+c2.x)/2;
-         resposta.y = (c1.y+c2.y)/2;
-      }
-
-      else if (resposta.x == 4) {
-         resposta.x = ((c1.x+c2.x)/2)-1;
-         resposta.y = (c1.y+c2.y)/2;
-      }
-
-      else if (resposta.y == 4) {
-         resposta.x = (c1.x+c2.x)/2;
-         resposta.y = ((c1.y-c2.y)/2)-1;
-      }
-
-      else   resposta.x = -1;
-   }
-
-   return resposta;
-}
-
-coordenadas um_entre(coordenadas c1, coordenadas c2) {
-   coordenadas resposta;
-
-   resposta.x = absoluto(c1.x-c2.x);
-   resposta.y = absoluto(c1.y-c2.y);
-
-   if ((resposta.x != 2 && resposta.x != 0) || (resposta.y != 2 && resposta.y != 0))
-      resposta.x = -1;
-
-   else if (resposta.x == resposta.y && c1.x-c2.x+c1.y-c2.y != 0)
-      resposta.x = -1;
-
-   else {
-      resposta.x = (c1.x+c2.x)/2;
-      resposta.y = (c1.y+c2.y)/2;
-   }
-
-   return resposta;
-}
-
-coordenadas dois_entre(coordenadas c1, coordenadas c2) {
-   coordenadas resposta;
-
-   resposta.x = absoluto(c1.x-c2.x);
-   resposta.y = absoluto(c1.y-c2.y);
-
-   if ((resposta.x != 3 && resposta.x != 0) || (resposta.y != 3 && resposta.y != 0))
-      resposta.x = -1;
-
-   else if (resposta.x == resposta.y && c1.x-c2.x+c1.y-c2.y != 0)
-      resposta.x = -1;
-
-   else {
-      if (resposta.x == 0)   resposta.x = c1.x;
-
-      else if (c1.x > c2.x)   resposta.x = c1.x-1;
-
-      else   resposta.x = c1.x+1;
-
-      if (resposta.y == 0)   resposta.y = c1.y;
-
-      else if (c1.y > c2.y)   resposta.y = c1.y-1;
-
-      else   resposta.y = c1.y+1;
-   }
-
-   return resposta;
-}
-
-coordenadas tres_entre(coordenadas c1, coordenadas c2) {
-   coordenadas resposta;
-
-   resposta.x = absoluto(c1.x-c2.x);
-   resposta.y = absoluto(c1.y-c2.y);
-
-   if ((resposta.x != 4 && resposta.x != 0) || (resposta.y != 4 && resposta.y != 0))
-      resposta.x = -1;
-
-   else if (resposta.x == resposta.y && c1.x-c2.x+c1.y-c2.y != 0)
-      resposta.x = -1;
-
-   else {
-      if (resposta.x == 0)   resposta.x = c1.x;
-
-      else if (c1.x > c2.x)   resposta.x = c1.x-2;
-
-      else   resposta.x = c1.x+2;
-
-      if (resposta.y == 0)   resposta.y = c1.y;
-
-      else if (c1.y > c2.y)   resposta.y = c1.y-2;
-
-      else   resposta.y = c1.y+2;
-   }
-
-   return resposta;
-}
-
-coordenadas decide_jogada(char **tab, char cor, int gan, int per, coordenadas novo, coordenadas ant) {
-   coordenadas jogada;
-
-   /**/
-
-   /* Tentando contra-atacar a nova jogada em relacao a anterior */
-   jogada = um_entre(novo, ant);
-
-   if (jogada.x >= 0)
-      if (jogada.x < tamanho && jogada.y < tamanho && tab[jogada.x][jogada.y] == '-')
-         return jogada;
-   
-   jogada = dois_entre(novo, ant);
-
-   if (jogada.x >= 0) {
-      if (jogada.x < tamanho && jogada.y < tamanho && tab[jogada.x][jogada.y] == '-')
-         return jogada;
-
-      else {
-         jogada = dois_entre(ant, novo);
-
-         if (jogada.x < tamanho && jogada.y < tamanho && tab[jogada.x][jogada.y] == '-')
-            return jogada;
-      }
-   }
-
-   jogada = duas_bordas(novo, ant);
-
-   if (jogada.x >= 0) {
-      if (jogada.x < tamanho && jogada.y < tamanho && tab[jogada.x][jogada.y] == '-')
-         return jogada;
-
-      else {
-         jogada = duas_bordas(ant, novo);
-
-         if (jogada.x < tamanho && jogada.y < tamanho && tab[jogada.x][jogada.y] == '-')
-            return jogada;
-      }
-   }
-
-   jogada = tres_entre(novo, ant);
-
-   if (jogada.x >= 0) {
-      if (jogada.x < tamanho && jogada.y < tamanho && tab[jogada.x][jogada.y] == '-')
-         return jogada;
-
-      else {
-         jogada = dois_entre(ant, novo);
-
-         if (jogada.x < tamanho && jogada.y < tamanho && tab[jogada.x][jogada.y] == '-')
-            return jogada;
-      }
-   }
-
-   jogada = tres_bordas(novo, ant);
-
-   if (jogada.x >= 0) {
-      if (jogada.x < tamanho && jogada.y < tamanho && tab[jogada.x][jogada.y] == '-')
-         return jogada;
-
-      else {
-         jogada = tres_bordas(ant, novo);
-
-         if (jogada.x < tamanho && jogada.y < tamanho && tab[jogada.x][jogada.y] == '-')
-            return jogada;
-      }
-   }
-
-   for (jogada.x = 0; jogada.x < tamanho; jogada.x++)
-      for (jogada.y = 0; jogada.y < tamanho; jogada.y++)
-         if (tab[jogada.x][jogada.y] == '-')   return jogada;
-   /*  */
+   printf("Bloqueio\n");
+   return posicao_critica(adv);
 }
