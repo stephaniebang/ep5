@@ -1,3 +1,5 @@
+/* Stephanie Eun Ji Bang   n.USP 8994414 */
+
 #ifndef __TIPOS_H__
 #define __TIPOS_H__
 

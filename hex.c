@@ -7,16 +7,18 @@
 #include "tipos.h"
 
 
+int tamanho = 12;
+int impressao = 0;
+
 int main(int argc, char *argv[]) {
    char **tab;
    posicao jogada;
    jogador *adversario, *eu;
-
+int i;
    /* Inicializando o jogo */
    tab = cria_tabuleiro();
    eu = cria_jogador(2*tamanho);
    adversario = cria_jogador(2*tamanho);
-
    eu->cor = argv[1][0];
 
    if (argc == 3 && argv[2][0] == 'd')   impressao = 1;
@@ -37,7 +39,8 @@ int main(int argc, char *argv[]) {
 
    else   return 0;
 
-   if (pie_rule(tab, jogada, eu->cor))
+   /* Aplicando uma possivel pie rule */
+   if (pie_rule(tab, jogada, eu->cor))   /* Se houver troca de jogadores */
       troca_jogadores(&(eu->cor), &(adversario->cor));
 
    inicializa_matriz(tab, eu);
@@ -49,7 +52,6 @@ int main(int argc, char *argv[]) {
       jogada = recebe_jogada(tab, adversario->cor);
 
       atualiza_matriz(tab, adversario, jogada);
-      printf("atualizou\n");
 
       if (!adversario->m[adversario->caminho[0].x][adversario->caminho[0].y])
          break;
@@ -61,6 +63,15 @@ int main(int argc, char *argv[]) {
 
       atualiza_matriz(tab, adversario, jogada);
       atualiza_matriz(tab, eu, jogada);
+
+      printf("Meu caminho(%c): ", eu->cor);
+
+      for (i = 0; i < eu->topo; i++)   printf("(%d, %d) ", eu->caminho[i].x, eu->caminho[i].y);
+
+      printf("\nCaminho adv(%c): ", adversario->cor);
+      for (i = 0; i < adversario->topo; i++)
+         printf("(%d, %d) ", adversario->caminho[i].x, adversario->caminho[i].y);
+      printf("\n");
    }
 
    if (!(eu->m[eu->caminho[0].x][eu->caminho[0].y]))

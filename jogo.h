@@ -19,10 +19,6 @@ void imprime_tabuleiro(char **tab);
  * tabuleiro tambem. */
 void faz_jogada(char **tab, char cor, posicao jog);
 
-/* A funcao recebe o tabuleiro tab e a posicao jog e retorna 1, se for possivel
- * realizar essa jogada, ou retorna 0, caso contrario. */
-int jogada_valida(char **tab, posicao jog);
-
 /* A funcao recebe o tabuleiro tab e a cor de um jogador e recebe pela entrada 
  * padrao a posicao de sua jogada, a realiza em tab e a retorna. */
 posicao recebe_jogada(char **tab, char cor);

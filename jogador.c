@@ -4,23 +4,20 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-jogador *cria_jogador(int n) {
-   int i, j;
-   jogador *p;
 
-   p = malloc(sizeof(jogador));
-   p->m = malloc(tamanho*sizeof(int *));
-   p->caminho = malloc(n*sizeof(posicao));
+/*********************
+* Funcoes auxiliares *
+*********************/
+void zera_caminho(jogador *p) {
+   /* A funcao reinicia o vetor caminho do jogador de ponteiro p. */
+   free(p->caminho);
+
+   p->caminho = malloc(p->max*sizeof(posicao));
    p->topo = 0;
-   p->max = n;
-
-   for (i = 0; i < tamanho; i++)
-      p->m[i] = malloc(tamanho*sizeof(int));
-
-   return p;
 }
 
 void realoca(jogador *p) {
+   /* A funcao aloca o dobro de espaco para o jogador de ponteiro p. */
    posicao *novo;
    int i;
 
@@ -34,57 +31,45 @@ void realoca(jogador *p) {
    p->max *= 2;
 }
 
-void empilha(jogador *p, posicao c) {
-   if (p->topo == p->max)   realoca(p);
-
-   p->caminho[p->topo] = c;
-   p->topo++;
-}
-
-void troca_jogadores(char *j1, char *j2) {
-   char copia_j1 = *j1;
-
-   *j1 = *j2;
-   *j2 = copia_j1;
-}
-
-void imprime_caminhos(jogador *p) {
-   int i;
-
-   printf("caminho %c\n", p->cor);
-   for (i = 0; i < p->topo; i++)   printf("(%d, %d) ", p->caminho[i].x, p->caminho[i].y);
-
-   printf("\n");
-}
-
-void imprime_matriz(int **m) {
-   int i, j, k;
-
-   for (i = 0; i < tamanho; i++) {
-      for (k = 0; k < i; k++)   printf("  ");
-
-      for (j = 0; j < tamanho; j++)
-         printf("%d ", m[i][j]);
-
-      printf("\n");
-   }
-}
-
 int menor_anterior(int **m, int lin, int col, char cor) {
-   if (cor == 'p') {
-      if (lin+1 < tamanho && m[lin][col-1] > m[lin+1][col-1])
-         return m[lin+1][col-1];
+   /* A funcao retorna o menor valor anterior a posicao (lin, col) da matriz m
+    * de acordo com a cor do jogador. */
+   int ant1, ant2, esq;
 
-      return m[lin][col-1];
+   if (cor == 'p') {   /* Se for relativo a peca preta */
+      ant1 = m[lin][col-1];
+
+      if (lin+1 < tamanho)   ant2 = m[lin+1][col-1];
+
+      else   ant2 = 2*tamanho;
+
+      if (lin-1 >= 0)   esq = m[lin-1][col];
+
+      else   esq = 2*tamanho;
    }
 
-   if (col+1 < tamanho && m[lin-1][col] > m[lin-1][col+1])
-      return m[lin-1][col+1];
+   else {   /* Se for relativo a peca branca */
+      ant1 = m[lin-1][col];
+   
+      if (col+1 < tamanho)   ant2 = m[lin-1][col+1];
 
-   return m[lin-1][col];
+      else   ant2 = 2*tamanho;
+
+      if (col-1 >= 0)   esq = m[lin][col-1];
+
+      else   esq = 2*tamanho;
+   }
+
+   if (ant2 < ant1 && ant2 < esq)   return ant2;
+
+   if (esq < ant1 && esq < ant2)   return ant2;
+
+   return ant1;
 }
 
-int menor_caminho(jogador *p) {
+void menor_caminho(jogador *p) {
+   /* A funcao guarda no vetor caminho do jogador de ponteiro p o menor caminho
+    * que o jogador pode formar. */
    posicao c;
    int i, j, menor;
 
@@ -149,16 +134,47 @@ int menor_caminho(jogador *p) {
          i--;
       }
    }
+}
 
-   imprime_caminhos(p);
 
-   return p->m[p->caminho[0].x][p->caminho[0].y];
+/*********************
+* Funcoes do jogador *
+*********************/
+jogador *cria_jogador(int n) {
+   int i;
+   jogador *p;
+
+   p = malloc(sizeof(jogador));
+   p->m = malloc(tamanho*sizeof(int *));
+   p->caminho = malloc(n*sizeof(posicao));
+   p->topo = 0;
+   p->max = n;
+
+   for (i = 0; i < tamanho; i++)
+      p->m[i] = malloc(tamanho*sizeof(int));
+
+   return p;
+}
+
+void empilha(jogador *p, posicao c) {
+   if (p->topo == p->max)   realoca(p);
+
+   p->caminho[p->topo] = c;
+   p->topo++;
+}
+
+void troca_jogadores(char *j1, char *j2) {
+   char copia_j1 = *j1;
+
+   *j1 = *j2;
+   *j2 = copia_j1;
 }
 
 void inicializa_matriz(char **t, jogador *p) {
    int i, j, menor;
 
-   if (p->cor == 'p') {
+   if (p->cor == 'p') {   /* Se for relativo a peca preta */
+      /* Criando a primeira coluna */
       for (i = 0; i < tamanho; i++)
          if (t[i][0] == 'p')   p->m[i][0] = 0;
 
@@ -166,6 +182,7 @@ void inicializa_matriz(char **t, jogador *p) {
 
          else   p->m[i][0] = 1;
 
+      /* Criando as demais colunas */
       for (j = 1; j < tamanho; j++) {
          for (i = 0; i < tamanho; i++) {
             menor = menor_anterior(p->m, i, j, 'p');
@@ -175,11 +192,20 @@ void inicializa_matriz(char **t, jogador *p) {
             else if (t[i][j] == 'b')   p->m[i][j] = tamanho+1;
 
             else   p->m[i][j] = menor+1;
+
+            if (i > 0 && t[i-1][j] != 'b') {
+               if (p->m[i][j] < p->m[i-1][j] && t[i-1][j] == 'p')
+                  p->m[i-1][j] = p->m[i][j];
+
+               else if (1+p->m[i][j] < p->m[i-1][j] && t[i-1][j] == '-')
+                  p->m[i-1][j] = 1+p->m[i][j];
+            }
          }
       }
    }
 
-   else {
+   else {   /* Se for relativo a peca branca */
+      /* Criando a primeira linha */
       for (j = 0; j < tamanho; j++)
          if (t[0][j] == 'b')   p->m[0][j] = 0;
 
@@ -187,6 +213,7 @@ void inicializa_matriz(char **t, jogador *p) {
 
          else   p->m[0][j] = 1;
 
+      /* Criando as demais linhas */
       for (i = 1; i < tamanho; i++) {
          for (j = 0; j < tamanho; j++) {
             menor = menor_anterior(p->m, i, j, 'b');
@@ -196,18 +223,26 @@ void inicializa_matriz(char **t, jogador *p) {
             else if(t[i][j] == 'p')   p->m[i][j] = tamanho+1;
 
             else   p->m[i][j] = menor+1;
+
+            if (j > 0 && t[i][j-1] != 'p') {
+               if (p->m[i][j] < p->m[i][j-1] && t[i][j-1] == 'b')
+                  p->m[i][j-1] = p->m[i][j];
+
+               else if (1+p->m[i][j] < p->m[i][j-1] && t[i][j-1] == '-');
+            }
          }
       }
    }
 
+   /* Atualizando o vetor caminho de p */
    menor_caminho(p);
 }
 
 void atualiza_matriz(char **t, jogador *p, posicao jog) {
    int i, j, menor, cont = 1;
 
-   if (p->cor == 'p') {
-      if (jog.y == 0) {
+   if (p->cor == 'p') {   /* Se for relativo a peca preta */
+      if (jog.y == 0) {   /* Se a jogada ter sido feita na primeira coluna */
          if (t[jog.x][0] == 'b')   p->m[jog.x][0] = tamanho+1;
 
          else   p->m[jog.x][0] = 0;
@@ -216,7 +251,7 @@ void atualiza_matriz(char **t, jogador *p, posicao jog) {
          cont++;
       }
 
-      for (j = jog.y; j < tamanho; j++) {
+      for (j = jog.y; j < tamanho; j++) {   /* Atualizando a partir da coluna jog.y */
          for (i = 0; i < cont && jog.x-i >= 0; i++) {
             menor = menor_anterior(p->m, jog.x-i, j, 'p');
 
@@ -225,6 +260,14 @@ void atualiza_matriz(char **t, jogador *p, posicao jog) {
             else if (t[jog.x-i][j] == 'b')   p->m[jog.x-i][j] = tamanho+1;
 
             else   p->m[jog.x-i][j] = menor+1;
+
+            if (i > 0 && t[i-1][j] != 'b') {
+               if (p->m[i][j] < p->m[i-1][j] && t[i-1][j] == 'p')
+                  p->m[i-1][j] = p->m[i][j];
+
+               else if (1+p->m[i][j] < p->m[i-1][j] && t[i-1][j] == '-')
+                  p->m[i-1][j] = 1+p->m[i][j];
+            }
          }
 
          cont++;
@@ -256,14 +299,16 @@ void atualiza_matriz(char **t, jogador *p, posicao jog) {
       }
    }
 
-   printf("foi\n");
-
    menor_caminho(p);
 }
 
-void zera_caminho(jogador *p) {
-   free(p->caminho);
+void destroi_jogador(jogador *p) {
+   int i;
 
-   p->caminho = malloc(p->max*sizeof(posicao));
-   p->topo = 0;
+   for (i = 0; i < tamanho; i++)
+      free(p->m[i]);
+
+   free(p->m);
+   free(p->caminho);
+   free(p);
 }
