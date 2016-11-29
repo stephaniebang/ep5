@@ -7,18 +7,18 @@
 #include "tipos.h"
 
 
-int tamanho = 12;
+int tamanho = 14;
 int impressao = 0;
 
 int main(int argc, char *argv[]) {
    char **tab;
    posicao jogada;
    jogador *adversario, *eu;
-int i;
+
    /* Inicializando o jogo */
    tab = cria_tabuleiro();
-   eu = cria_jogador(2*tamanho);
-   adversario = cria_jogador(2*tamanho);
+   eu = cria_jogador(tamanho);
+   adversario = cria_jogador(tamanho);
    eu->cor = argv[1][0];
 
    if (argc == 3 && argv[2][0] == 'd')   impressao = 1;
@@ -47,13 +47,13 @@ int i;
    inicializa_matriz(tab, adversario);
 
    /* Continuando o jogo ate alguem completar um caminho */
-   while (eu->m[eu->caminho[0].x][eu->caminho[0].y]) {
+   while (!caminho_completo(tab, eu)) {
       /* Recebendo a jogada do adversario */
       jogada = recebe_jogada(tab, adversario->cor);
 
       atualiza_matriz(tab, adversario, jogada);
 
-      if (!adversario->m[adversario->caminho[0].x][adversario->caminho[0].y])
+      if (caminho_completo(tab, adversario))
          break;
 
       /* Decidindo e efetuando a propria jogada */
@@ -63,21 +63,16 @@ int i;
 
       atualiza_matriz(tab, adversario, jogada);
       atualiza_matriz(tab, eu, jogada);
-
-      printf("Meu caminho(%c): ", eu->cor);
-
-      for (i = 0; i < eu->topo; i++)   printf("(%d, %d) ", eu->caminho[i].x, eu->caminho[i].y);
-
-      printf("\nCaminho adv(%c): ", adversario->cor);
-      for (i = 0; i < adversario->topo; i++)
-         printf("(%d, %d) ", adversario->caminho[i].x, adversario->caminho[i].y);
-      printf("\n");
    }
 
    if (!(eu->m[eu->caminho[0].x][eu->caminho[0].y]))
       printf("%c ganhou\n", eu->cor);
 
    else   printf("%c ganhou\n", adversario->cor);
+
+   destroi_tabuleiro(tab);
+   destroi_jogador(adversario);
+   destroi_jogador(eu);
 
    return 0;
 }

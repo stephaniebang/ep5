@@ -112,6 +112,15 @@ posicao recebe_jogada(char **tab, char cor) {
    return jog;
 }
 
+void destroi_tabuleiro(char **tab) {
+   int i;
+
+   for (i = 0; i < tamanho; i++)
+      free(tab[i]);
+
+   free(tab);
+}
+
 
 /************************
 * Funcoes de estrategia *
@@ -167,47 +176,21 @@ int pie_rule(char **tab, posicao jog, char cor) {
    return troca;
 }
 
-int caminho_completo(char **tab, jogador *jog) {
-   posicao c;
-   int i, j, menor;
-
-   if (jog->cor == 'p') {
-      for (i = tamanho-1; i >= 0; i--) {
-         menor = 0;
-
-         for (j = 1; j < tamanho; j++)
-            if (jog->m[i][j] < jog->m[i][menor])   menor = j;
-
-         c.x = i;
-         c.y = menor;
-
-         empilha(jog, c);
-      }
-   }
-
-   else {
-      for (j = 0; j < tamanho; j++) {
-         menor = 0;
-
-         for (i = 1; i < tamanho; i++)
-            if (jog->m[i][j] < jog->m[menor][j])   menor = i;
-
-         c.x = menor;
-         c.y = j;
-
-         empilha(jog, c);
-      }
-   }
-
-   return jog->topo;
-}
-
 posicao decide_jogada(char **tab, jogador *jog, jogador *adv, posicao ultimo) {
+   posicao ret;
    atualiza_matriz(tab, jog, ultimo);
 
-   if (jog->m[jog->caminho[0].x][jog->caminho[0].y] <
-         jog->m[adv->caminho[0].x][adv->caminho[0].y]-2)
-      return posicao_critica(tab, jog);
+   ret = posicao_critica(tab, adv);
 
-   return posicao_critica(tab, adv);
+   if (tab[ret.x][ret.y] == '-')   return ret;
+      
+   ret = posicao_critica(tab, jog);
+
+   if (tab[ret.x][ret.y] != '-') {
+      for (ret.x = 0; ret.x < tamanho; ret.x++)
+         for (ret.y = 0; ret.y < tamanho; ret.y++)
+            if (tab[ret.x][ret.y] == '-')   return ret;
+   }
+
+   return ret;
 }

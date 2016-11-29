@@ -34,37 +34,17 @@ void realoca(jogador *p) {
 int menor_anterior(int **m, int lin, int col, char cor) {
    /* A funcao retorna o menor valor anterior a posicao (lin, col) da matriz m
     * de acordo com a cor do jogador. */
-   int ant1, ant2, esq;
+   if (cor == 'p') {
+      if (lin+1 < tamanho && m[lin][col-1] > m[lin+1][col-1])
+         return m[lin+1][col-1];
 
-   if (cor == 'p') {   /* Se for relativo a peca preta */
-      ant1 = m[lin][col-1];
-
-      if (lin+1 < tamanho)   ant2 = m[lin+1][col-1];
-
-      else   ant2 = 2*tamanho;
-
-      if (lin-1 >= 0)   esq = m[lin-1][col];
-
-      else   esq = 2*tamanho;
+      return m[lin][col-1];
    }
 
-   else {   /* Se for relativo a peca branca */
-      ant1 = m[lin-1][col];
-   
-      if (col+1 < tamanho)   ant2 = m[lin-1][col+1];
+   if (col+1 < tamanho && m[lin-1][col] > m[lin-1][col+1])
+      return m[lin-1][col+1];
 
-      else   ant2 = 2*tamanho;
-
-      if (col-1 >= 0)   esq = m[lin][col-1];
-
-      else   esq = 2*tamanho;
-   }
-
-   if (ant2 < ant1 && ant2 < esq)   return ant2;
-
-   if (esq < ant1 && esq < ant2)   return ant2;
-
-   return ant1;
+   return m[lin-1][col];
 }
 
 void menor_caminho(jogador *p) {
@@ -136,12 +116,40 @@ void menor_caminho(jogador *p) {
    }
 }
 
+int possui_proximo(char **tab, char cor, int lin, int col) {
+   /* A funcao procura recursivamente se todas as posicoes depois de (lin, col)
+    * possuem a peca cor. */
+   int existe = 0;
+
+   if (cor == 'p') {   /* Se for relativo a peca preta */
+      if (col == tamanho-1)   return 1;
+
+      if (lin > 0 && tab[lin-1][col+1] == 'p')
+         existe = possui_proximo(tab, 'p', lin-1, col+1);
+
+      if (!existe && tab[lin][col+1] == 'p')
+         existe = possui_proximo(tab, 'p', lin, col+1);
+   }
+
+   else {   /* Se for relativo a peca branca */
+      if (lin == tamanho-1)   return 1;
+
+      if (col > 0 && tab[lin+1][col-1] == 'b')
+         existe = possui_proximo(tab, 'b', lin+1, col-1);
+
+      if (!existe && tab[lin+1][col] == 'b')
+         existe = possui_proximo(tab, 'b', lin+1, col);
+   }
+
+   return existe;
+}
+
 
 /*********************
 * Funcoes do jogador *
 *********************/
 jogador *cria_jogador(int n) {
-   int i;
+   int i, j;
    jogador *p;
 
    p = malloc(sizeof(jogador));
@@ -150,8 +158,12 @@ jogador *cria_jogador(int n) {
    p->topo = 0;
    p->max = n;
 
-   for (i = 0; i < tamanho; i++)
+   for (i = 0; i < tamanho; i++) {
       p->m[i] = malloc(tamanho*sizeof(int));
+
+      for (j = 0; j < tamanho; j++)
+         p->m[i][j] = -1;
+   }
 
    return p;
 }
@@ -192,14 +204,6 @@ void inicializa_matriz(char **t, jogador *p) {
             else if (t[i][j] == 'b')   p->m[i][j] = tamanho+1;
 
             else   p->m[i][j] = menor+1;
-
-            if (i > 0 && t[i-1][j] != 'b') {
-               if (p->m[i][j] < p->m[i-1][j] && t[i-1][j] == 'p')
-                  p->m[i-1][j] = p->m[i][j];
-
-               else if (1+p->m[i][j] < p->m[i-1][j] && t[i-1][j] == '-')
-                  p->m[i-1][j] = 1+p->m[i][j];
-            }
          }
       }
    }
@@ -223,13 +227,6 @@ void inicializa_matriz(char **t, jogador *p) {
             else if(t[i][j] == 'p')   p->m[i][j] = tamanho+1;
 
             else   p->m[i][j] = menor+1;
-
-            if (j > 0 && t[i][j-1] != 'p') {
-               if (p->m[i][j] < p->m[i][j-1] && t[i][j-1] == 'b')
-                  p->m[i][j-1] = p->m[i][j];
-
-               else if (1+p->m[i][j] < p->m[i][j-1] && t[i][j-1] == '-');
-            }
          }
       }
    }
@@ -238,11 +235,27 @@ void inicializa_matriz(char **t, jogador *p) {
    menor_caminho(p);
 }
 
+int caminho_completo(char **tab, jogador *p) {
+   int i, existe = 0;
+
+   if (p->cor == 'p')
+      for (i = 0; i < tamanho && !existe; i++)
+         if (tab[i][0] == 'p')
+            existe = possui_proximo(tab, 'p', i, 0);
+
+   else
+      for (i = 0; i < tamanho && !existe; i++)
+         if (tab[0][i] == 'b')
+            existe = possui_proximo(tab, 'b', 0, 1);
+
+   return existe;
+}
+
 void atualiza_matriz(char **t, jogador *p, posicao jog) {
    int i, j, menor, cont = 1;
 
    if (p->cor == 'p') {   /* Se for relativo a peca preta */
-      if (jog.y == 0) {   /* Se a jogada ter sido feita na primeira coluna */
+      if (jog.y == 0) {   /* Se a jogada foi feita na primeira coluna */
          if (t[jog.x][0] == 'b')   p->m[jog.x][0] = tamanho+1;
 
          else   p->m[jog.x][0] = 0;
@@ -260,22 +273,14 @@ void atualiza_matriz(char **t, jogador *p, posicao jog) {
             else if (t[jog.x-i][j] == 'b')   p->m[jog.x-i][j] = tamanho+1;
 
             else   p->m[jog.x-i][j] = menor+1;
-
-            if (i > 0 && t[i-1][j] != 'b') {
-               if (p->m[i][j] < p->m[i-1][j] && t[i-1][j] == 'p')
-                  p->m[i-1][j] = p->m[i][j];
-
-               else if (1+p->m[i][j] < p->m[i-1][j] && t[i-1][j] == '-')
-                  p->m[i-1][j] = 1+p->m[i][j];
-            }
          }
 
          cont++;
       }
    }
 
-   else {
-      if (jog.x == 0) {
+   else {   /* Se for relativo a peca branca */
+      if (jog.x == 0) {   /* Se a jogada foi feita na primeira linha */
          if (t[0][jog.y] == 'p')   p->m[0][jog.y] = tamanho+1;
 
          else   p->m[0][jog.y] = 0;
@@ -284,7 +289,7 @@ void atualiza_matriz(char **t, jogador *p, posicao jog) {
          cont++;
       }
 
-      for (i = jog.x; i < tamanho; i++) {
+      for (i = jog.x; i < tamanho; i++) {   /* Atualizando a partir da linha jog.x */
          for (j = 0; j < cont && jog.y-j >= 0; j++) {
             menor = menor_anterior(p->m, i, jog.y-j, 'b');
 
@@ -299,6 +304,7 @@ void atualiza_matriz(char **t, jogador *p, posicao jog) {
       }
    }
 
+   /* Atualizando o vetor caminho de p */
    menor_caminho(p);
 }
 

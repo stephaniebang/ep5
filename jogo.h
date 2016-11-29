@@ -29,13 +29,12 @@ posicao recebe_jogada(char **tab, char cor);
  * adversaria e retorna 1, se ela for repetida, ou 0, caso contrario. */
 int pie_rule(char **tab, posicao jog, char cor);
 
-/* A funcao recebe um tabuleiro tab e um jogador jog. Ela retorna 1, se o
- * jogador conseguiu formar um caminho completo, ou retorna 0, caso contrario. */
-int caminho_completo(char **tab, jogador *jog);
-
 /* A funcao recebe um tabuleiro tab e um jogador jog e retorna a posicao da
  * jogada a ser realizada por esse jogador. */
 posicao decide_jogada(char **tab, jogador *jog, jogador *adv, posicao ultimo);
+
+/* A funcao destroi o tabuleiro de ponteiro tab. */
+void destroi_tabuleiro(char **tab);
 
 
 #endif

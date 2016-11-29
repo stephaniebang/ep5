@@ -19,6 +19,10 @@ void troca_jogadores(char *j1, char *j2);
  * tabuleiro t. */
 void inicializa_matriz(char **t, jogador *p);
 
+/* A funcao recebe um tabuleiro tab e um jogador jog. Ela retorna 1, se o
+ * jogador conseguiu formar um caminho completo, ou retorna 0, caso contrario. */
+int caminho_completo(char **tab, jogador *p);
+
 /* A funcao atualiza a matriz m do jogador p de acordo com a ultima jogada
  * realizada e a situacao do tabuleiro t. */
 void atualiza_matriz(char **t, jogador *p, posicao jog);
